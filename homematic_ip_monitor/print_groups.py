@@ -6,6 +6,7 @@ import re
 from argparse import ArgumentParser
 from collections import namedtuple
 from logging.handlers import TimedRotatingFileHandler
+from datetime import datetime
 
 import homematicip
 from homematicip.device import *
@@ -15,6 +16,21 @@ from homematicip.home import Home
 from homematicip.base.helpers import handle_config
 
 
+def get_current_date_and_time():
+    # datetime object containing current date and time
+    now = datetime.now()
+    print("now =", datetime)
+    # dd/mm/YY H:M:S
+    return now.strftime("%d/%m/%Y %H:%M:%S")
+
+class Data:
+    def __init__(self, room_name, target_temperature, current_temperature):
+        self.room_name = room_name
+        self.target_temperature = target_temperature
+        self.current_temperature = current_temperature
+    def __str__(self):
+        return "Room name: " + self.room_name + ", target temperature: " + \
+    self.target_temperature + ", current_temperature: " + self.current_temperature;
 
 def main():
     parser = ArgumentParser(description="a cli wrapper for the homematicip API")
@@ -64,8 +80,12 @@ def main():
     regex = re.compile(r'HEATING (.*) window.*setPointTemperature\((\d+\.+\d*)\).*actualTemperature\((\d+\.+\d*)\)')
     rooms = list(filter(regex.search, sortedGroupsStr))
 
+    print("date and time =", get_current_date_and_time())
+
     for r in rooms:
-        print(regex.search(r).group(1) + " " + regex.search(r).group(2) + " " + regex.search(r).group(3))
+        t = datetime.now()
+        d = Data(regex.search(r).group(1), regex.search(r).group(2), regex.search(r).group(3))
+        print(d)
 
 if __name__ == "__main__":
     main()
