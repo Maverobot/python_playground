@@ -101,7 +101,7 @@ def main():
         rooms = list(filter(regex.search, sortedGroups))
 
         # Add new measurement into the dictionary
-        t = datetime.now()
+        t = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         for r in rooms:
             data.append([
                 t,
