@@ -53,10 +53,19 @@ def main():
     if not home.get_current_state():
         print("homematicip cannot get its current state.")
         return
+    print("\n")
+    print("=== Homematicip Initialized ===")
+    print("\n")
 
     sortedGroups = sorted(home.groups, key=attrgetter("groupType", "label"))
-    for g in sortedGroups:
-        print(g)
+    sortedGroupsStr = [str(g) for g in sortedGroups]
+
+    # Regex to extract (room name, target temperature, current temperature)
+    regex = re.compile(r'HEATING (.*) window.*setPointTemperature\((\d+\.+\d*)\).*actualTemperature\((\d+\.+\d*)\)')
+    rooms = list(filter(regex.search, sortedGroupsStr))
+
+    for r in rooms:
+        print(regex.search(r).group(1) + " " + regex.search(r).group(2) + " " + regex.search(r).group(3))
 
 if __name__ == "__main__":
     main()
