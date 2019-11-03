@@ -23,21 +23,26 @@ def get_current_date_and_time():
     # dd/mm/YY H:M:S
     return now.strftime("%d/%m/%Y %H:%M:%S")
 
+
 class Data:
     def __init__(self, room_name, target_temperature, current_temperature):
         self.room_name = room_name
         self.target_temperature = target_temperature
         self.current_temperature = current_temperature
+
     def __str__(self):
         return "Room name: " + self.room_name + ", target temperature: " + \
-    self.target_temperature + ", current_temperature: " + self.current_temperature;
+            self.target_temperature + ", current temperature: " + self.current_temperature
+
 
 def main():
-    parser = ArgumentParser(description="a cli wrapper for the homematicip API")
+    parser = ArgumentParser(
+        description="a cli wrapper for the homematicip API")
     parser.add_argument(
         "--config_file",
         type=str,
-        help="the configuration file. If nothing is specified the script will search for it.",
+        help=
+        "the configuration file. If nothing is specified the script will search for it.",
     )
 
     try:
@@ -54,7 +59,8 @@ def main():
         try:
             _config = homematicip.load_config_file(args.config_file)
         except FileNotFoundError:
-            print("##### CONFIG FILE NOT FOUND: {} #####".format(args.config_file))
+            print("##### CONFIG FILE NOT FOUND: {} #####".format(
+                args.config_file))
             return
     else:
         _config = homematicip.find_and_load_config_file()
@@ -73,19 +79,38 @@ def main():
     print("=== Homematicip Initialized ===")
     print("\n")
 
-    sortedGroups = sorted(home.groups, key=attrgetter("groupType", "label"))
-    sortedGroupsStr = [str(g) for g in sortedGroups]
+    rooms_map = {}
 
-    # Regex to extract (room name, target temperature, current temperature)
-    regex = re.compile(r'HEATING (.*) window.*setPointTemperature\((\d+\.+\d*)\).*actualTemperature\((\d+\.+\d*)\)')
-    rooms = list(filter(regex.search, sortedGroupsStr))
+    while True:
+        sortedGroups = [
+            str(g)
+            for g in sorted(home.groups, key=attrgetter("groupType", "label"))
+        ]
 
-    print("date and time =", get_current_date_and_time())
+        # Regex to extract (room name, target temperature, current temperature)
+        regex = re.compile(
+            r'HEATING (.*) window.*setPointTemperature\((\d+\.+\d*)\).*actualTemperature\((\d+\.+\d*)\)'
+        )
+        rooms = list(filter(regex.search, sortedGroups))
 
-    for r in rooms:
-        t = datetime.now()
-        d = Data(regex.search(r).group(1), regex.search(r).group(2), regex.search(r).group(3))
-        print(d)
+        for r in rooms:
+            t = datetime.now()
+            d = Data(
+                regex.search(r).group(1),
+                regex.search(r).group(2),
+                regex.search(r).group(3))
+            if d.room_name_ in rooms_map:
+                rooms_map[d.room_name_].append(
+                    [regex.search(r).group(2),
+                     regex.search(r).group(3)])
+            else:
+                rooms_map[d.room_name_] = []
+                rooms_map[d.room_name_].append(
+                    [t, regex.search(r).group(2),
+                     regex.search(r).group(3)])
+        print(str(rooms_map))
+        time.sleep(1)
+
 
 if __name__ == "__main__":
     main()
