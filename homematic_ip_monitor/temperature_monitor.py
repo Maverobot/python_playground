@@ -4,10 +4,9 @@ import sys
 import time
 import re
 from argparse import ArgumentParser
-from collections import namedtuple
-from logging.handlers import TimedRotatingFileHandler
 from datetime import datetime
 import pandas as pd
+import os
 
 import homematicip
 from homematicip.device import *
@@ -15,6 +14,8 @@ from homematicip.group import *
 from homematicip.rule import *
 from homematicip.home import Home
 from homematicip.base.helpers import handle_config
+
+log_file = "./temperature_log.csv"
 
 
 def main():
@@ -59,14 +60,20 @@ def main():
     if not home.get_current_state():
         print("homematicip cannot get its current state.")
         return
-    print("\n")
-    print("=== Homematicip Initialized ===")
-    print("\n")
+    print("\n=== Homematicip Initialized ===\n")
 
     rooms_history = {}
 
     data = []
     i = 0
+
+    # Check if the log file already exist
+    if os.path.isfile(log_file):
+        df = pd.read_csv(log_file)
+        data = df.values.tolist()
+        print(str(len(data)) + " rows have been loaded from " + log_file)
+        print("")
+
     while True:
         sortedGroups = [
             str(g)
@@ -95,10 +102,11 @@ def main():
                                       "time", "room", "target_temperature",
                                       "current_temperature"
                                   ])
-        data_frame.to_csv("./temperature_log.csv")
+        data_frame.to_csv(log_file, index=False)
         print("Temperature measurement index: " + str(i))
         i = i + 1
-        time.sleep(5)
+        # Read temperature data every 10 seconds
+        time.sleep(10)
 
 
 if __name__ == "__main__":
