@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 from collections import namedtuple
 from logging.handlers import TimedRotatingFileHandler
 from datetime import datetime
+import pandas as pd
 
 import homematicip
 from homematicip.device import *
@@ -16,26 +17,9 @@ from homematicip.home import Home
 from homematicip.base.helpers import handle_config
 
 
-def get_current_date_and_time():
-    # datetime object containing current date and time
-    now = datetime.now()
-    print("now =", datetime)
-    # dd/mm/YY H:M:S
-    return now.strftime("%d/%m/%Y %H:%M:%S")
-
-
-class Data:
-    def __init__(self, room_name, target_temperature, current_temperature):
-        self.room_name = room_name
-        self.target_temperature = target_temperature
-        self.current_temperature = current_temperature
-
-    def __str__(self):
-        return "Room name: " + self.room_name + ", target temperature: " + \
-            self.target_temperature + ", current temperature: " + self.current_temperature
-
-
 def main():
+    pd.set_option('display.width', 200)
+
     parser = ArgumentParser(
         description="a cli wrapper for the homematicip API")
     parser.add_argument(
@@ -79,8 +63,10 @@ def main():
     print("=== Homematicip Initialized ===")
     print("\n")
 
-    rooms_map = {}
+    rooms_history = {}
 
+    data = []
+    i = 0
     while True:
         sortedGroups = [
             str(g)
@@ -93,23 +79,26 @@ def main():
         )
         rooms = list(filter(regex.search, sortedGroups))
 
+        # Add new measurement into the dictionary
+        t = datetime.now()
         for r in rooms:
-            t = datetime.now()
-            d = Data(
+            data.append([
+                t,
                 regex.search(r).group(1),
                 regex.search(r).group(2),
-                regex.search(r).group(3))
-            if d.room_name_ in rooms_map:
-                rooms_map[d.room_name_].append(
-                    [regex.search(r).group(2),
-                     regex.search(r).group(3)])
-            else:
-                rooms_map[d.room_name_] = []
-                rooms_map[d.room_name_].append(
-                    [t, regex.search(r).group(2),
-                     regex.search(r).group(3)])
-        print(str(rooms_map))
-        time.sleep(1)
+                regex.search(r).group(3)
+            ])
+
+        # Pandas Dataframe
+        data_frame = pd.DataFrame(data,
+                                  columns=[
+                                      "time", "room", "target_temperature",
+                                      "current_temperature"
+                                  ])
+        data_frame.to_csv("./temperature_log.csv")
+        print("Temperature measurement index: " + str(i))
+        i = i + 1
+        time.sleep(5)
 
 
 if __name__ == "__main__":
