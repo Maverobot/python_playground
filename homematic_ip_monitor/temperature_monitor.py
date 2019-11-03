@@ -30,6 +30,13 @@ def main():
         "the configuration file. If nothing is specified the script will search for it.",
     )
 
+    parser.add_argument(
+        "--interval",
+        type=int,
+        help=
+        "the interval between two subsequent server requests for temperature data.",
+    )
+
     try:
         args = parser.parse_args()
     except SystemExit:
@@ -52,6 +59,13 @@ def main():
     if _config is None:
         print("Could not find configuration file. Script will exit")
         return
+
+    _interval = 10
+    if args.interval:
+        _interval = args.interval
+        print("Using the interval: " + str(_interval))
+    else:
+        print("Using the default interval: " + str(_interval))
 
     home = Home()
     home.set_auth_token(_config.auth_token)
@@ -105,8 +119,8 @@ def main():
         data_frame.to_csv(log_file, index=False)
         print("Temperature measurement index: " + str(i))
         i = i + 1
-        # Read temperature data every 10 seconds
-        time.sleep(10)
+        # Read temperature data every _interval seconds
+        time.sleep(_interval)
 
 
 if __name__ == "__main__":
